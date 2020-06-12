@@ -98,6 +98,7 @@ function uninstall {
     kubectl delete -f ../nginx/
     kubectl -n opa delete -f .
     kubectl -n opa delete secret opa-server
+    rm -f webhook-configuration.yaml
     echo -e "${GREEN}[-] Removing namespace labels...${NC}"
     echo -e "${YELLOW}[-] Namespace: kube-system${NC}"
     LABEL=$(kubectl get ns kube-system --show-labels | awk 'FNR == 2 {print $4}')

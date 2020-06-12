@@ -34,9 +34,8 @@ data:
     # deny pods running as root
     deny[msg] {
         input.request.kind.kind == "Deployment"
-        pod := input.request.object.spec.template.spec
-        not pod.securityContext.RunAsNonRoot
-        msg := sprintf("Pod %v running as a root. Please specify the 'RunAsNonRoot: true' option in the Pod securityContext.'", [pod.name])
+        not input.request.object.spec.template.spec.securityContext.RunAsNonRoot
+        msg := "Pod running as a root. Please specify the 'RunAsNonRoot: true' option in the Pod securityContext.'"
     }
 
     # deny containers that allow privilege escalation
