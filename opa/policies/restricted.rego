@@ -21,7 +21,15 @@ deny[msg] {
     input.request.kind.kind == "Deployment"
     container := input.request.object.spec.template.spec.containers[_]
     not container.securityContext.RunAsNonRoot
-    msg := sprintf("Container %v running as a root. Please specify the 'RunAsNonRoot: true' option int he container securityContext.'", [container.name])
+    msg := sprintf("Container %v running as a root. Please specify the 'RunAsNonRoot: true' option in the container securityContext.'", [container.name])
+}
+
+# deny pods running as root
+deny[msg] {
+    input.request.kind.kind == "Deployment"
+    pod := input.request.object.spec.template.spec
+    not pod.securityContext.RunAsNonRoot
+    msg := sprintf("Pod %v running as a root. Please specify the 'RunAsNonRoot: true' option in the Pod securityContext.'", [pod.name])
 }
 
 # deny containers that allow privilege escalation
@@ -36,7 +44,16 @@ deny[msg] {
 deny[msg] {
     input.request.kind.kind == "Deployment"
     container := input.request.object.spec.template.spec.containers[_]
-    not container.securityContext.capabilties.drop[0] == "ALL"
+    dropcap := container.securityContext.capabilties.drop[_]
+    dropcap  == "ALL"
     msg := sprintf("Container %v allows unnecessary kernel capabilities. Please add the capabilities.drop: ['ALL'] option to the container securityContext. Specific capabilities can be added, if required, using the capabilities.add option in the container securityContext.", [container.name])
 }
 
+# deny containers that add CAP_SYS_ADMIN
+deny[msg] {
+    input.request.kind.kind == "Deployment"
+    container := input.request.object.spec.template.spec.containers[_]
+    addcap := container.securityContext.capabilities.add[_]
+    addcap == "CAP_SYS_ADMIN"
+    msg := sprintf("Container %v adds CAP_SYS_ADMIN kernel capability.", [container.name])
+}
