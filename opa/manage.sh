@@ -62,6 +62,30 @@ EOF
     done
 
     echo -e "${GREEN}[+] Creating Kubernetes OPA webhook...${NC}"
+    cat > webhook-configuration.yaml <<EOF
+kind: ValidatingWebhookConfiguration
+apiVersion: admissionregistration.k8s.io/v1beta1
+metadata:
+  name: opa-validating-webhook
+webhooks:
+  - name: validating-webhook.openpolicyagent.org
+    namespaceSelector:
+      matchExpressions:
+      - key: openpolicyagent.org/webhook
+        operator: NotIn
+        values:
+        - ignore
+    rules:
+      - operations: ["CREATE", "UPDATE"]
+        apiGroups: ["*"]
+        apiVersions: ["*"]
+        resources: ["*"]
+    clientConfig:
+      caBundle: $(cat ca.crt | base64 | tr -d '\n')
+      service:
+        namespace: opa
+        name: opa
+EOF
     kubectl -n opa apply -f webhook-configuration.yaml
 
     echo -e "${GREEN}[+] Done!${NC}"
